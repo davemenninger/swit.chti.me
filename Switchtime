@@ -1,0 +1,101 @@
+#!/usr/bin/env perl
+use Mojolicious::Lite;
+
+my $status_for_switch = {
+  one => 'off',
+  two => 'on',
+};
+
+my $clients = {};
+
+# Template with browser-side code
+get '/' => sub {
+  my $c = shift;
+  $c->render('index');
+};
+
+# WebSocket echo service
+websocket '/echo' => sub {
+  my $c = shift;
+  app->log->debug( sprintf 'Client connected: %s', $c->tx );
+  my $id = sprintf "%s", $c->tx;
+  $clients->{$id} = $c->tx;
+
+  # Opened
+  $c->app->log->debug('WebSocket opened');
+
+  # Increase inactivity timeout for connection a bit
+  $c->inactivity_timeout(300);
+
+  # Incoming message
+  $c->on(message => sub {
+    my ($c, $msg) = @_;
+    # $c->send("echo: $msg");
+    $c->app->log->debug("incoming: $msg");
+    if ( $msg ne 'init' ){
+      toggle_switch(msg => $msg);
+    }
+
+    for (keys %$clients) {
+        $clients->{$_}->send({json => {
+            statuses => $status_for_switch,
+        }});
+    }
+  });
+
+  # Closed
+  $c->on(finish => sub {
+    my ($c, $code, $reason) = @_;
+    $c->app->log->debug("WebSocket closed with status $code");
+  });
+};
+
+sub toggle_switch {
+  my (%args) = @_;
+  if ( $status_for_switch->{$args{msg}} eq 'on' ){
+    $status_for_switch->{$args{msg}} = 'off';
+  }
+  else {
+    $status_for_switch->{$args{msg}} = 'on';
+  }
+
+  return;
+}
+
+app->start;
+__DATA__
+
+@@ index.html.ep
+<!DOCTYPE html>
+<html>
+  <head><title>Echo</title></head>
+  <body>
+    <script>
+      var ws = new WebSocket('<%= url_for('echo')->to_abs %>');
+
+      // Incoming messages
+      ws.onmessage = function (event) {
+        // document.body.innerHTML += event.data + '<br/>';
+        var res = JSON.parse(event.data);
+        // console.log( res );
+        for ( var s in res.statuses ) {
+          // console.log( s );
+          // console.log( res.statuses[s] );
+          document.getElementById(s).value = res.statuses[s];
+        }
+      };
+
+      // Outgoing messages
+      ws.onopen = function (event) {
+        ws.send('init');
+      };
+
+      function toggleme (num) {
+        // console.log(num);
+        ws.send( num );
+      }
+    </script>
+    <input id='one' type='submit' value='blah' onclick='toggleme("one");' />
+    <input id='two' type='submit' value='blah' onclick='toggleme("two");' />
+  </body>
+</html>

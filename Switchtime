@@ -22,8 +22,8 @@ websocket '/echo' => sub {
   # Opened
   $c->app->log->debug('WebSocket opened');
 
-  # Increase inactivity timeout for connection a bit
-  $c->inactivity_timeout(300);
+  # Allow inactivity indefinitely
+  $c->inactivity_timeout(0);
 
   # Incoming message
   $c->on(message => sub {

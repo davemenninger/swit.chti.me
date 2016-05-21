@@ -1,16 +1,14 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite;
 
-my $status_for_switch = {
-  one => 'off',
-  two => 'on',
-};
+my $status_for_switch = {};
 
 my $clients = {};
 
 # Template with browser-side code
 get '/' => sub {
   my $c = shift;
+  $c->stash( qty => 5 ); # scalar keys $status_for_switch );
   $c->render('index');
 };
 
@@ -75,12 +73,8 @@ __DATA__
 
       // Incoming messages
       ws.onmessage = function (event) {
-        // document.body.innerHTML += event.data + '<br/>';
         var res = JSON.parse(event.data);
-        // console.log( res );
         for ( var s in res.statuses ) {
-          // console.log( s );
-          // console.log( res.statuses[s] );
           document.getElementById(s).value = res.statuses[s];
         }
       };
@@ -91,11 +85,17 @@ __DATA__
       };
 
       function toggleme (num) {
-        // console.log(num);
         ws.send( num );
       }
     </script>
-    <input id='one' type='submit' value='blah' onclick='toggleme("one");' />
-    <input id='two' type='submit' value='blah' onclick='toggleme("two");' />
+    <%= $qty %>
+    <%  for my $id ( 1 .. $qty ) { %>
+      <input
+        id='<%= $id %>'
+        type='submit'
+        value='<%= $id %>'
+        onclick='toggleme("<%= $id %>");'
+      />
+    <% } %>
   </body>
 </html>

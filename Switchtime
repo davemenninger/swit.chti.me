@@ -34,13 +34,7 @@ websocket '/echo' => sub {
       toggle_switch(msg => $msg);
     }
 
-    my $num_clients = scalar keys %$clients;
-    for (keys %$clients) {
-        $clients->{$_}->send({json => {
-            statuses => $status_for_switch,
-            num_clients => $num_clients,
-        }});
-    }
+    update_clients( clients => $clients );
   });
 
   # Closed
@@ -63,6 +57,7 @@ sub update_clients {
           num_clients => $num_clients,
       }});
   }
+
   return;
 }
 

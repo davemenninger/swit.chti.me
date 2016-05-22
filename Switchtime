@@ -8,7 +8,7 @@ my $clients = {};
 # Template with browser-side code
 get '/' => sub {
   my $c = shift;
-  $c->stash( qty => 5 ); # scalar keys $status_for_switch );
+  $c->stash( qty => 9 ); # scalar keys $status_for_switch );
   $c->render('index');
 };
 
@@ -34,9 +34,11 @@ websocket '/echo' => sub {
       toggle_switch(msg => $msg);
     }
 
+    my $num_clients = scalar keys %$clients;
     for (keys %$clients) {
         $clients->{$_}->send({json => {
             statuses => $status_for_switch,
+            num_clients => $num_clients,
         }});
     }
   });
@@ -45,8 +47,24 @@ websocket '/echo' => sub {
   $c->on(finish => sub {
     my ($c, $code, $reason) = @_;
     $c->app->log->debug("WebSocket closed with status $code");
+    delete $clients->{$id};
+    update_clients( clients => $clients );
   });
 };
+
+sub update_clients {
+  my (%args) = @_;
+  my $clients = $args{clients};
+
+  my $num_clients = scalar keys %$clients;
+  for (keys %$clients) {
+      $clients->{$_}->send({json => {
+          statuses => $status_for_switch,
+          num_clients => $num_clients,
+      }});
+  }
+  return;
+}
 
 sub toggle_switch {
   my (%args) = @_;
@@ -66,7 +84,7 @@ __DATA__
 @@ index.html.ep
 <!DOCTYPE html>
 <html>
-  <head><title>Echo</title></head>
+  <head><title>Swit.chti.me</title></head>
   <body>
     <script>
       var ws = new WebSocket('<%= url_for('echo')->to_abs %>');
@@ -77,6 +95,7 @@ __DATA__
         for ( var s in res.statuses ) {
           document.getElementById(s).value = res.statuses[s];
         }
+        document.getElementById('num_clients').innerHTML = res.num_clients;
       };
 
       // Outgoing messages
@@ -88,7 +107,7 @@ __DATA__
         ws.send( num );
       }
     </script>
-    <%= $qty %>
+    <h4>Switches:</h4>
     <%  for my $id ( 1 .. $qty ) { %>
       <input
         id='<%= $id %>'
@@ -97,5 +116,7 @@ __DATA__
         onclick='toggleme("<%= $id %>");'
       />
     <% } %>
+    <h4>Number of players currently connected:</h4>
+    <p id='num_clients'>0</p>
   </body>
 </html>

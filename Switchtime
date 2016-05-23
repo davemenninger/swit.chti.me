@@ -106,7 +106,7 @@ __DATA__
 
       // Detect connect close
       ws.onclose = function (event) {
-        document.getElementById('num_clients').innerHTML = 'lost connection';
+        document.getElementById('num_clients').innerHTML = 'lost connection <a href="javascript:window.location.href=window.location.href">reload</a>';
       };
 
       function toggleme (num) {

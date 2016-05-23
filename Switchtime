@@ -5,6 +5,8 @@ my $status_for_switch = {};
 
 my $clients = {};
 
+my $winning = 0;
+
 # Template with browser-side code
 get '/' => sub {
   my $c = shift;
@@ -34,6 +36,8 @@ websocket '/echo' => sub {
       toggle_switch(msg => $msg);
     }
 
+    $winning = ( ( scalar map { $_ eq 'on' ? $_ : () } values $status_for_switch ) % 3 ) ? 'nope' : 'yep';
+
     update_clients( clients => $clients );
   });
 
@@ -55,6 +59,7 @@ sub update_clients {
       $clients->{$_}->send({json => {
           statuses => $status_for_switch,
           num_clients => $num_clients,
+          winning => $winning,
       }});
   }
 
@@ -91,6 +96,7 @@ __DATA__
           document.getElementById(s).value = res.statuses[s];
         }
         document.getElementById('num_clients').innerHTML = res.num_clients;
+        document.getElementById('winning').innerHTML = res.winning;
       };
 
       // Outgoing messages
@@ -98,10 +104,16 @@ __DATA__
         ws.send('init');
       };
 
+      // Detect connect close
+      ws.onclose = function (event) {
+        document.getElementById('num_clients').innerHTML = 'lost connection';
+      };
+
       function toggleme (num) {
         ws.send( num );
       }
     </script>
+    <h1>Swit.chti.me</h1>
     <h4>Switches:</h4>
     <%  for my $id ( 1 .. $qty ) { %>
       <input
@@ -113,5 +125,7 @@ __DATA__
     <% } %>
     <h4>Number of players currently connected:</h4>
     <p id='num_clients'>0</p>
+    <h4>Winning?</h4>
+    <p id='winning'>0</p>
   </body>
 </html>

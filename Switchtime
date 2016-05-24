@@ -36,7 +36,6 @@ websocket '/echo' => sub {
       toggle_switch(msg => $msg);
     }
 
-    $winning = ( ( scalar map { $_ eq 'on' ? $_ : () } values $status_for_switch ) % 3 ) ? 'nope' : 'yep';
 
     update_clients( clients => $clients );
   });
@@ -52,8 +51,11 @@ websocket '/echo' => sub {
 
 sub update_clients {
   my (%args) = @_;
+  # global variable could be overridden if you want to just update some clients?
   my $clients = $args{clients};
 
+
+  $winning = is_winning();
   my $num_clients = scalar keys %$clients;
   for (keys %$clients) {
       $clients->{$_}->send({json => {
@@ -76,6 +78,16 @@ sub toggle_switch {
   }
 
   return;
+}
+
+sub is_winning {
+  my (%args) = @_;
+  my $is_winning = 0;
+  my $num_clients = scalar keys %$clients;
+
+  $is_winning = ( ( scalar map { $_ eq 'on' ? $_ : () } values $status_for_switch ) % $num_clients ) ? 'nope' : 'yep';
+
+  return $is_winning;
 }
 
 app->start;

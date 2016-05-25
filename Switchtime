@@ -30,12 +30,10 @@ websocket '/echo' => sub {
   # Incoming message
   $c->on(message => sub {
     my ($c, $msg) = @_;
-    # $c->send("echo: $msg");
     $c->app->log->debug("incoming: $msg");
     if ( $msg ne 'init' ){
       toggle_switch(msg => $msg);
     }
-
 
     update_clients( clients => $clients );
   });
@@ -53,7 +51,6 @@ sub update_clients {
   my (%args) = @_;
   # global variable could be overridden if you want to just update some clients?
   my $clients = $args{clients};
-
 
   $winning = is_winning();
   my $num_clients = scalar keys %$clients;
@@ -85,7 +82,7 @@ sub is_winning {
   my $is_winning = 0;
   my $num_clients = scalar keys %$clients;
 
-  $is_winning = ( ( scalar map { $_ eq 'on' ? $_ : () } values $status_for_switch ) % $num_clients ) ? 'nope' : 'yep';
+  $is_winning = ( ( scalar map { $_ eq 'on' ? $_ : () } values %$status_for_switch ) % $num_clients ) ? 'nope' : 'yep';
 
   return $is_winning;
 }
@@ -105,7 +102,13 @@ __DATA__
       ws.onmessage = function (event) {
         var res = JSON.parse(event.data);
         for ( var s in res.statuses ) {
-          document.getElementById(s).value = res.statuses[s];
+          document.getElementById(s).alt = res.statuses[s];
+          if ( res.statuses[s] == 'on' ) {
+            document.getElementById(s).src = '/up.png';
+          }
+          else {
+            document.getElementById(s).src = '/down.png';
+          }
         }
         document.getElementById('num_clients').innerHTML = res.num_clients;
         document.getElementById('winning').innerHTML = res.winning;
@@ -128,12 +131,15 @@ __DATA__
     <h1>Swit.chti.me</h1>
     <h4>Switches:</h4>
     <%  for my $id ( 1 .. $qty ) { %>
-      <input
-        id='<%= $id %>'
-        type='submit'
-        value='<%= $id %>'
+      <a
+        href='javascript:;'
         onclick='toggleme("<%= $id %>");'
-      />
+        ><img
+        id='<%= $id %>'
+        type='image'
+        src='/down.png'
+        alt='<%= $id %>'
+      /></a>
     <% } %>
     <h4>Number of players currently connected:</h4>
     <p id='num_clients'>0</p>

@@ -110,7 +110,10 @@ __DATA__
 @@ index.html.ep
 <!DOCTYPE html>
 <html>
-  <head><title>Swit.chti.me</title></head>
+  <head>
+    <title>swit.chti.me</title>
+    <link rel='icon' href='/up.png' />
+  </head>
   <body>
     <script>
       var ws = new WebSocket('<%= url_for('echo')->to_abs %>');

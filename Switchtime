@@ -7,6 +7,15 @@ my $clients = {};
 
 my $winning = 0;
 
+my $seconds_per_turn = 20;
+
+Mojo::IOLoop->recurring( $seconds_per_turn => sub {
+  app->ua->get('http://mojolicious.org' => sub {
+    my ($ua, $tx) = @_;
+    npc_turn();
+  });
+});
+
 # Template with browser-side code
 get '/' => sub {
   my $c = shift;
@@ -32,7 +41,7 @@ websocket '/echo' => sub {
     my ($c, $msg) = @_;
     $c->app->log->debug("incoming: $msg");
     if ( $msg ne 'init' ){
-      toggle_switch(msg => $msg);
+      toggle_switch(switch => $msg);
     }
 
     update_clients( clients => $clients );
@@ -67,11 +76,11 @@ sub update_clients {
 
 sub toggle_switch {
   my (%args) = @_;
-  if ( $status_for_switch->{$args{msg}} eq 'on' ){
-    $status_for_switch->{$args{msg}} = 'off';
+  if ( $status_for_switch->{$args{switch}} && $status_for_switch->{$args{switch}} eq 'on' ){
+    $status_for_switch->{$args{switch}} = 'off';
   }
   else {
-    $status_for_switch->{$args{msg}} = 'on';
+    $status_for_switch->{$args{switch}} = 'on';
   }
 
   return;
@@ -82,9 +91,17 @@ sub is_winning {
   my $is_winning = 0;
   my $num_clients = scalar keys %$clients;
 
+  return 'nope' if !$num_clients;
+
   $is_winning = ( ( scalar map { $_ eq 'on' ? $_ : () } values %$status_for_switch ) % $num_clients ) ? 'nope' : 'yep';
 
   return $is_winning;
+}
+
+sub npc_turn {
+  app->log->debug("npc turn");
+  toggle_switch(switch => '5');
+  update_clients( clients => $clients );
 }
 
 app->start;

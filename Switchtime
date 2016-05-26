@@ -1,9 +1,22 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite;
 
+my $num_switches = 9;
 my $status_for_switch = {};
 
 my $clients = {};
+
+my $ghosts = {
+  alice => {
+    location => 5,
+  },
+  bob => {
+    location => 7,
+  },
+  carol => {
+    location => 1,
+  },
+};
 
 my $winning = 0;
 
@@ -19,7 +32,7 @@ Mojo::IOLoop->recurring( $seconds_per_turn => sub {
 # Template with browser-side code
 get '/' => sub {
   my $c = shift;
-  $c->stash( qty => 9 ); # scalar keys $status_for_switch );
+  $c->stash( qty => $num_switches );
   $c->render('index');
 };
 
@@ -63,10 +76,12 @@ sub update_clients {
 
   $winning = is_winning();
   my $num_clients = scalar keys %$clients;
+  my $num_ghosts = scalar keys %$ghosts;
   for (keys %$clients) {
       $clients->{$_}->send({json => {
           statuses => $status_for_switch,
           num_clients => $num_clients,
+          num_ghosts => $num_ghosts,
           winning => $winning,
       }});
   }
@@ -99,9 +114,20 @@ sub is_winning {
 }
 
 sub npc_turn {
-  app->log->debug("npc turn");
-  toggle_switch(switch => '5');
-  update_clients( clients => $clients );
+    app->log->debug('tick');
+    # each ghost toggles the switch at their location,
+    # then moves randomly 1 or 0 spaces
+    for my $ghost ( keys %$ghosts ) {
+        toggle_switch( switch => $ghosts->{$ghost}->{location} );
+        $ghosts->{$ghost}->{location} =
+          ( ( $ghosts->{$ghost}->{location} + ( ( int rand(3) ) - 1 ) )
+            % $num_switches ) + 1;
+        app->log->debug( "\t"
+              . $ghost
+              . "'s location is: \t"
+              . $ghosts->{$ghost}->{location} );
+    }
+    update_clients( clients => $clients );
 }
 
 app->start;
@@ -131,6 +157,7 @@ __DATA__
           }
         }
         document.getElementById('num_clients').innerHTML = res.num_clients;
+        document.getElementById('num_ghosts').innerHTML = res.num_ghosts;
         document.getElementById('logo').style.color = ( res.winning == 'yep' ? 'green' : 'red');
       };
 
@@ -167,8 +194,11 @@ __DATA__
       /></a>
     <% } %>
     <p>
-      <img src='/players.png'/ style='vertical-align:middle;'/>&nbsp;:
+      <img src='/players.png' style='vertical-align:middle;'/>&nbsp;:
       <span id='num_clients'>0</span>
+      <br/>
+      <img src='./ghosts.png' style='vertical-align:middle;' />&nbsp;:
+      <span id='num_ghosts'>0</span>
     </p>
   </body>
 </html>

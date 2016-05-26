@@ -39,8 +39,7 @@ server {
 
 = TODO
 
-* npc behavior random
-* display npc'2
+* responsive/accessible
 
 = Credits
 

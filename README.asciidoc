@@ -39,9 +39,11 @@ server {
 
 = TODO
 
-* spawn npc's
+* npc's die
+* config file
 * separate template file
 * responsive/accessible
+* tests
 
 = Credits
 

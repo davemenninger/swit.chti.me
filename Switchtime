@@ -12,19 +12,19 @@ my $clients = {};
 
 my $ghosts = {
   alice => {
-    location => 33,
+    location => 3,
   },
   bob => {
     location => 72,
   },
   carol => {
-    location => 18,
+    location => 96,
   },
 };
 
 my $winning = 0;
 
-my $seconds_per_turn = 10;
+my $seconds_per_turn = 15;
 
 Mojo::IOLoop->recurring( $seconds_per_turn => sub {
   app->ua->get('http://mojolicious.org' => sub {
@@ -120,22 +120,40 @@ sub is_winning {
 sub npc_turn {
     app->log->debug('tick');
 
+    if ( rand(100) < 5 ) {
+      spawn_ghost();
+    }
+
     # each ghost toggles the switch at their location,
     # then moves randomly 1 or 0 spaces
     for my $ghost ( keys %$ghosts ) {
         toggle_switch( switch => $ghosts->{$ghost}->{location} );
-
-        my $move_direction = ( int rand(3) ) - 1; # -1,0,1
-        $ghosts->{$ghost}->{location} =
-          ( ( $ghosts->{$ghost}->{location} + $move_direction )
-            % $num_switches );
-
+        move_ghost( ghost => $ghost );
         app->log->debug( "\t"
               . $ghost
               . "'s location is: \t"
               . $ghosts->{$ghost}->{location} );
     }
     update_clients( clients => $clients );
+}
+
+sub move_ghost {
+    my (%args) = @_;
+
+    my $move_direction   = ( int rand(3) ) - 1;                     # -1,0,1
+    my $current_location = $ghosts->{ $args{ghost} }->{location};
+    my $new_location     = $current_location + $move_direction;
+    $new_location = 1             if $new_location > $num_switches;
+    $new_location = $num_switches if $new_location < 1;
+    $ghosts->{ $args{ghost} }->{location} = $new_location;
+    return;
+}
+
+sub spawn_ghost {
+  my $name = 'ghost'.(int rand(1000) );
+  $ghosts->{$name}->{location} = (int rand($num_switches-1))+1;
+  app->log->debug( "\t".$name . ' spawned at ' . $ghosts->{$name}->{location} );
+  return;
 }
 
 app->start;
@@ -157,7 +175,6 @@ __DATA__
       ws.onmessage = function (event) {
         var res = JSON.parse(event.data);
         for ( var s in res.statuses ) {
-          console.log(s);
           document.getElementById(s).alt = res.statuses[s];
           if ( res.statuses[s] == 'on' ) {
             document.getElementById(s).src = '/up.png';

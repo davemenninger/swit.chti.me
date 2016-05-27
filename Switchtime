@@ -1,26 +1,30 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite;
 
-my $num_switches = 9;
+my $num_switches = 99;
 my $status_for_switch = {};
+for my $s ( 1 .. $num_switches )
+{
+  $status_for_switch->{$s} = 'on';
+}
 
 my $clients = {};
 
 my $ghosts = {
   alice => {
-    location => 5,
+    location => 33,
   },
   bob => {
-    location => 7,
+    location => 72,
   },
   carol => {
-    location => 1,
+    location => 18,
   },
 };
 
 my $winning = 0;
 
-my $seconds_per_turn = 20;
+my $seconds_per_turn = 10;
 
 Mojo::IOLoop->recurring( $seconds_per_turn => sub {
   app->ua->get('http://mojolicious.org' => sub {
@@ -37,7 +41,7 @@ get '/' => sub {
 };
 
 # WebSocket echo service
-websocket '/echo' => sub {
+websocket '/switches' => sub {
   my $c = shift;
   app->log->debug( sprintf 'Client connected: %s', $c->tx );
   my $id = sprintf "%s", $c->tx;
@@ -115,13 +119,17 @@ sub is_winning {
 
 sub npc_turn {
     app->log->debug('tick');
+
     # each ghost toggles the switch at their location,
     # then moves randomly 1 or 0 spaces
     for my $ghost ( keys %$ghosts ) {
         toggle_switch( switch => $ghosts->{$ghost}->{location} );
+
+        my $move_direction = ( int rand(3) ) - 1; # -1,0,1
         $ghosts->{$ghost}->{location} =
-          ( ( $ghosts->{$ghost}->{location} + ( ( int rand(3) ) - 1 ) )
-            % $num_switches ) + 1;
+          ( ( $ghosts->{$ghost}->{location} + $move_direction )
+            % $num_switches );
+
         app->log->debug( "\t"
               . $ghost
               . "'s location is: \t"
@@ -139,15 +147,17 @@ __DATA__
   <head>
     <title>swit.chti.me</title>
     <link rel='icon' href='/up.png' />
+    <!-- <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/normalize/4.1.1/normalize.css' /> -->
   </head>
   <body>
     <script>
-      var ws = new WebSocket('<%= url_for('echo')->to_abs %>');
+      var ws = new WebSocket('<%= url_for('switches')->to_abs %>');
 
       // Incoming messages
       ws.onmessage = function (event) {
         var res = JSON.parse(event.data);
         for ( var s in res.statuses ) {
+          console.log(s);
           document.getElementById(s).alt = res.statuses[s];
           if ( res.statuses[s] == 'on' ) {
             document.getElementById(s).src = '/up.png';
@@ -182,6 +192,12 @@ __DATA__
     \__ \\ V  V /| | |_ | (__| | | | |_| |_| | | | | |  __/
     |___/ \_/\_/ |_|\__(_)___|_| |_|\__|_(_)_| |_| |_|\___|
     </pre>
+    <p>
+      <img src='/players.png' style='vertical-align:middle;'/>&nbsp;:
+      <span id='num_clients'>0</span>&nbsp;
+      <img src='./ghosts.png' style='vertical-align:middle;' />&nbsp;:
+      <span id='num_ghosts'>0</span>
+    </p>
     <%  for my $id ( 1 .. $qty ) { %>
       <a
         href='javascript:;'
@@ -191,14 +207,8 @@ __DATA__
         type='image'
         src='/down.png'
         alt='<%= $id %>'
+        style='vertical-align:middle;'
       /></a>
     <% } %>
-    <p>
-      <img src='/players.png' style='vertical-align:middle;'/>&nbsp;:
-      <span id='num_clients'>0</span>
-      <br/>
-      <img src='./ghosts.png' style='vertical-align:middle;' />&nbsp;:
-      <span id='num_ghosts'>0</span>
-    </p>
   </body>
 </html>

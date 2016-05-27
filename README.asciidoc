@@ -39,6 +39,8 @@ server {
 
 = TODO
 
+* spawn npc's
+* separate template file
 * responsive/accessible
 
 = Credits
@@ -46,3 +48,4 @@ server {
 * http://mojolicious.org/perldoc/Mojolicious/Guides/Cookbook#WebSocket-web-service
 * https://github.com/kraih/mojo/wiki/Writing-websocket-chat-using-Mojolicious-Lite
 * http://nginx.org/en/docs/http/websocket.html
+* http://gameprogrammingpatterns.com/contents.html

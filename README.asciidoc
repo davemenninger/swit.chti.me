@@ -39,7 +39,6 @@ server {
 
 = TODO
 
-* npc's die
 * config file
 * separate template file
 * responsive/accessible

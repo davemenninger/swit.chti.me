@@ -360,3 +360,62 @@ DISTRIBUTIONS
       JSON::PP 2.27103
       Pod::Simple 3.09
       Time::Local 1.2
+  SVG-2.64
+    pathname: S/SZ/SZABGAB/SVG-2.64.tar.gz
+    provides:
+      SVG 2.64
+      SVG::DOM 2.64
+      SVG::Element 2.64
+      SVG::Extension 2.64
+      SVG::XML 2.64
+    requirements:
+      ExtUtils::MakeMaker 0
+      Scalar::Util 0
+      parent 0
+  SVG-Sparkline-1.11
+    pathname: G/GW/GWADEJ/SVG-Sparkline-1.11.tar.gz
+    provides:
+      SVG::Sparkline 1.11
+      SVG::Sparkline::Area 1.11
+      SVG::Sparkline::Bar 1.11
+      SVG::Sparkline::Line 1.11
+      SVG::Sparkline::RangeArea 1.11
+      SVG::Sparkline::RangeBar 1.11
+      SVG::Sparkline::Utils 1.11
+      SVG::Sparkline::Whisker 1.11
+    requirements:
+      Carp 0
+      ExtUtils::MakeMaker 0
+      Getopt::Long 0
+      Pod::Usage 0
+      SVG 2.5
+      Test::Exception 0
+      Test::More 0
+      perl 5.008
+  Sub-Uplevel-0.25
+    pathname: D/DA/DAGOLDEN/Sub-Uplevel-0.25.tar.gz
+    provides:
+      Sub::Uplevel 0.25
+    requirements:
+      Carp 0
+      ExtUtils::MakeMaker 6.17
+      constant 0
+      perl 5.006
+      strict 0
+      warnings 0
+  Test-Exception-0.43
+    pathname: E/EX/EXODIST/Test-Exception-0.43.tar.gz
+    provides:
+      Test::Exception 0.43
+    requirements:
+      Carp 0
+      Exporter 0
+      ExtUtils::MakeMaker 0
+      Sub::Uplevel 0.18
+      Test::Builder 0.7
+      Test::Builder::Tester 1.07
+      Test::Harness 2.03
+      base 0
+      perl 5.006001
+      strict 0
+      warnings 0

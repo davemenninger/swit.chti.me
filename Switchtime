@@ -1,6 +1,10 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite;
 use Acme::MetaSyntactic qw( norse_mythology );
+use SVG::Sparkline;
+
+my @ghost_population = ( 3 );
+my $ghost_svg_xml = '';
 
 my $num_switches = 99;
 my $status_for_switch = {};
@@ -40,6 +44,7 @@ Mojo::IOLoop->recurring( $seconds_per_turn => sub {
 get '/' => sub {
   my $c = shift;
   $c->stash( qty => $num_switches );
+  $c->stash( ghost_svg => $ghost_svg_xml );
   $c->render('index');
 };
 
@@ -90,6 +95,7 @@ sub update_clients {
           num_clients => $num_clients,
           num_ghosts => $num_ghosts,
           winning => $winning,
+          ghost_svg => $ghost_svg_xml,
       }});
   }
 
@@ -150,6 +156,7 @@ sub npc_turn {
         }
     }
 
+    $ghost_svg_xml = update_ghost_svg();
     update_clients( clients => $clients );
 }
 
@@ -184,6 +191,14 @@ sub age_ghost {
     return;
 }
 
+sub update_ghost_svg {
+  my $num_ghosts = scalar keys %$ghosts;
+  push @ghost_population , $num_ghosts;
+  shift @ghost_population if ( scalar @ghost_population > 300 );
+  my $sl1 = SVG::Sparkline->new( Line => { values => \@ghost_population, color => 'blue', height => 32 } );
+  return $sl1->to_string;
+}
+
 app->start;
 __DATA__
 
@@ -214,6 +229,7 @@ __DATA__
         document.getElementById('num_clients').innerHTML = res.num_clients;
         document.getElementById('num_ghosts').innerHTML = res.num_ghosts;
         document.getElementById('logo').style.color = ( res.winning == 'yep' ? 'green' : 'red');
+        document.getElementById('spark').innerHTML = res.ghost_svg;
       };
 
       // Outgoing messages
@@ -255,5 +271,8 @@ __DATA__
         style='vertical-align:middle;'
       /></a>
     <% } %>
+    <p id='spark'>
+    <%== $ghost_svg %>
+    </p>
   </body>
 </html>

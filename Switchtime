@@ -212,7 +212,7 @@ __DATA__
   </head>
   <body>
     <script>
-      var ws = new WebSocket('<%= url_for('switches')->to_abs %>');
+      var ws = new WebSocket('<%= url_for('switches')->to_abs->scheme('wss') %>');
 
       // Incoming messages
       ws.onmessage = function (event) {

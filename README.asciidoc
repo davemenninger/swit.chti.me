@@ -24,16 +24,27 @@ upstream swit.chti.me {
 }
 
 server {
-        server_name swit.chti.me;
+  listen 80;
+  server_name swit.chti.me;
+  return 301 https://$server_name$request_uri;
+}
 
-        location / {
+server {
+	listen 443 ssl;
+
+	server_name swit.chti.me;
+
+        ssl_certificate "/etc/letsencrypt/live/swit.chti.me/fullchain.pem";
+        ssl_certificate_key "/etc/letsencrypt/live/swit.chti.me/privkey.pem";
+
+	location / {
             proxy_pass http://swit.chti.me;
             include /etc/nginx/proxy_params;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
             proxy_read_timeout 7d;
-        }
+	}
 }
 ----
 
